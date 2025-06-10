@@ -1,0 +1,37 @@
+{
+  "name": "@dropsy/airdrop",
+  "version": "0.0.1",
+  "description": "this is just a test package ",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/dropsy/airdrop",
+  "repository": {
+    "url": "https://github.com/dropsy/airdrop"
+  },
+  "scripts": {
+    "build": "tsup"
+  },
+  "keywords": [
+    "solana",
+    "solana airdrop",
+    "web3",
+    "create airdrop",
+    "solana web3",
+    "dropsy"
+  ],
+  "author": "MBK Official",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "tsup": "^8.5.0",
+    "typedoc": "^0.28.5",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@solana/kit": "^2.1.1"
+  }
+}
