@@ -1,21 +1,30 @@
-# My Test Package
+# dropsy-airdrop beta
 
-[![npm version](https://img.shields.io/npm/v/my-test-package.svg)](https://www.npmjs.com/package/my-test-package)
+[![npm version](https://img.shields.io/npm/v/@dropsy/airdrop.svg)](https://www.npmjs.com/package/@dropsy/airdrop)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Docs](https://img.shields.io/badge/docs-online-blue)](https://scoolmb.github.io/dropsy-airdrop/)
 
-A test TypeScript package demonstrating modern npm package development with:
+A modern client SDK for interacting with the **Dropsy Airdrop Protocol** on Solana, built with:
 
-- TypeScript
-- tsup for bundling
-- Dual CJS/ESM support
-- Type declarations
+- ✅ TypeScript
+- ⚙️ [tsup](https://github.com/egoist/tsup) for fast bundling
+- 🔀 Dual CJS (`require`) and ESM (`import`) support
+- 📦 Auto-generated type declarations
+- 🌐 Web3-ready & optimized for dApp integration
+
+> Full API documentation: [https://scoolmb.github.io/dropsy-airdrop](https://scoolmb.github.io/dropsy-airdrop)
 
 ## Installation
 
 ```bash
-npm install test
+npm install @dropsy/airdrop
+# ora
+yarn add @dropsy/airdrop
 # or
-yarn add test
-# or
-pnpm add test
+pnpm add @dropsy/airdrop
 ```
+
+## 📚 Documentation
+
+Full API documentation is available at  
+👉 [https://scoolmb.github.io/dropsy-airdrop/](https://scoolmb.github.io/dropsy-airdrop/)
