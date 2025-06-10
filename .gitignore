@@ -1,7 +1,10 @@
 /dist
 /node_modules
-
+/docs
 .env
 .DS_Store
+.gitignore
+.npmignore
 
 tsup.config.json
+typedoc.json
