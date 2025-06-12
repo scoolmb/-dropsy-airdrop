@@ -18,6 +18,24 @@ A modern client SDK for interacting with the **Dropsy Airdrop Protocol** on Sola
 ⚠️ Instruction formats may change without warning  
 ⚠️ Devnet only - no mainnet support yet
 
+## 🛠 Coming Soon
+
+**📖 Interactive Documentation**  
+Full API docs with live examples
+
+**🧪 Testnet Sandbox**  
+Try before you integrate
+
+**🎮 CLI Interface**  
+Command-line airdrop management
+
+## 🔭 Current Status (v0.β)
+
+- **Network**: Devnet only
+- **Stability**: Experimental
+- **Program ID**: Subject to change
+- **Roadmap**: Mainnet launch
+
 > Full API documentation: [https://scoolmb.github.io/dropsy-airdrop](https://scoolmb.github.io/dropsy-airdrop)
 
 ## Installation
