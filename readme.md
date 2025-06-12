@@ -10,7 +10,13 @@ A modern client SDK for interacting with the **Dropsy Airdrop Protocol** on Sola
 - ⚙️ [tsup](https://github.com/egoist/tsup) for fast bundling
 - 🔀 Dual CJS (`require`) and ESM (`import`) support
 - 📦 Auto-generated type declarations
-- 🌐 Web3-ready & optimized for dApp integration
+
+## 🚨 Important Notes
+
+⚠️ This SDK is in active development  
+⚠️ All program addresses are temporary  
+⚠️ Instruction formats may change without warning  
+⚠️ Devnet only - no mainnet support yet
 
 > Full API documentation: [https://scoolmb.github.io/dropsy-airdrop](https://scoolmb.github.io/dropsy-airdrop)
 
