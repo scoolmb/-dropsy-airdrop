@@ -90,7 +90,7 @@ Why Use a Controller?
 How to Initialize a Controller :
 
 ```bash
-import \* as dropsy from "@dropsy/airdrop";
+import * as dropsy from "@dropsy/airdrop";
 
 // Create the instruction to initialize your controller
 const ix = await dropsy.getInitializeControllerInstructionAsync({
