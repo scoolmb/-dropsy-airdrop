@@ -99,7 +99,25 @@ feeLamports: BigInt(5000), // The fee lamports others will pay when c using your
 });
 ```
 
+Get initialize airdrop instruction :
+
+````bash
+import * as dropsy from "@dropsy/airdrop";
+
+// Create the instruction to initialize your controller
+const ix = dropsy.getInitializeAirdropInstructionAsync({
+    authority: wallet,   // signer (airdrop creator)
+    mint: mint,       // token mint address
+    controller: controller,     // controller ( fee collector )
+    merkleRoot: merkleRootArray,    // merkle root as an array where all eligible wallets with amount
+    startsTime: null,  // BigInt(.....)   // time when the airdrop will start (default is now )
+    endTime: null,   // BigInt(.....)    // time when the airdrop will end (default is after 60 days  )
+});
+```bash
+checkout the init-airdrop.ts in the examples folder to discover how to create merkleRoot
+
 ## 📚 Documentation
 
-Full API documentation is available at  
+Full API documentation is available at
 👉 [https://scoolmb.github.io/dropsy-airdrop/](https://scoolmb.github.io/dropsy-airdrop/)
+````

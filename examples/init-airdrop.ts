@@ -77,9 +77,8 @@ const main = async () => {
     mint: mint,
     controller: controller,
     merkleRoot: merkleRootArray,
-    startsTime: null,
-    endTime: null,
-
+    startsTime: null,  // BigInt(.....)
+    endTime: null,   // BigInt(.....) 
   })
   const instruction = dropsy.getInitializeAirdropInstruction({
     stats: statsPda,
