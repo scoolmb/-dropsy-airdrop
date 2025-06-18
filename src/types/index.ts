@@ -11,4 +11,6 @@ export * from './airdropInitialized';
 export * from './bitmapClosed';
 export * from './bitmapInitialized';
 export * from './controllerInitialized';
+export * from './feesCollected';
+export * from './masterInitialized';
 export * from './tokensDeposited';

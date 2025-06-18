@@ -58,8 +58,6 @@ export type ClaimTokensInstruction<
   TAccountAirdrop extends string | IAccountMeta<string> = string,
   TAccountBitmap extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
-  TAccountFeeVault extends string | IAccountMeta<string> = string,
-  TAccountController extends string | IAccountMeta<string> = string,
   TAccountClaimer extends string | IAccountMeta<string> = string,
   TAccountTreasury extends
     | string
@@ -90,12 +88,6 @@ export type ClaimTokensInstruction<
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
-      TAccountFeeVault extends string
-        ? WritableAccount<TAccountFeeVault>
-        : TAccountFeeVault,
-      TAccountController extends string
-        ? ReadonlyAccount<TAccountController>
-        : TAccountController,
       TAccountClaimer extends string
         ? WritableSignerAccount<TAccountClaimer> &
             IAccountSignerMeta<TAccountClaimer>
@@ -163,8 +155,6 @@ export type ClaimTokensInput<
   TAccountAirdrop extends string = string,
   TAccountBitmap extends string = string,
   TAccountMint extends string = string,
-  TAccountFeeVault extends string = string,
-  TAccountController extends string = string,
   TAccountClaimer extends string = string,
   TAccountTreasury extends string = string,
   TAccountTokenProgram extends string = string,
@@ -175,8 +165,6 @@ export type ClaimTokensInput<
   airdrop: Address<TAccountAirdrop>;
   bitmap: Address<TAccountBitmap>;
   mint: Address<TAccountMint>;
-  feeVault: Address<TAccountFeeVault>;
-  controller: Address<TAccountController>;
   claimer: TransactionSigner<TAccountClaimer>;
   treasury?: Address<TAccountTreasury>;
   tokenProgram?: Address<TAccountTokenProgram>;
@@ -192,8 +180,6 @@ export function getClaimTokensInstruction<
   TAccountAirdrop extends string,
   TAccountBitmap extends string,
   TAccountMint extends string,
-  TAccountFeeVault extends string,
-  TAccountController extends string,
   TAccountClaimer extends string,
   TAccountTreasury extends string,
   TAccountTokenProgram extends string,
@@ -206,8 +192,6 @@ export function getClaimTokensInstruction<
     TAccountAirdrop,
     TAccountBitmap,
     TAccountMint,
-    TAccountFeeVault,
-    TAccountController,
     TAccountClaimer,
     TAccountTreasury,
     TAccountTokenProgram,
@@ -221,8 +205,6 @@ export function getClaimTokensInstruction<
   TAccountAirdrop,
   TAccountBitmap,
   TAccountMint,
-  TAccountFeeVault,
-  TAccountController,
   TAccountClaimer,
   TAccountTreasury,
   TAccountTokenProgram,
@@ -241,8 +223,6 @@ export function getClaimTokensInstruction<
     airdrop: { value: input.airdrop ?? null, isWritable: false },
     bitmap: { value: input.bitmap ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
-    feeVault: { value: input.feeVault ?? null, isWritable: true },
-    controller: { value: input.controller ?? null, isWritable: false },
     claimer: { value: input.claimer ?? null, isWritable: true },
     treasury: { value: input.treasury ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
@@ -278,8 +258,6 @@ export function getClaimTokensInstruction<
       getAccountMeta(accounts.airdrop),
       getAccountMeta(accounts.bitmap),
       getAccountMeta(accounts.mint),
-      getAccountMeta(accounts.feeVault),
-      getAccountMeta(accounts.controller),
       getAccountMeta(accounts.claimer),
       getAccountMeta(accounts.treasury),
       getAccountMeta(accounts.tokenProgram),
@@ -296,8 +274,6 @@ export function getClaimTokensInstruction<
     TAccountAirdrop,
     TAccountBitmap,
     TAccountMint,
-    TAccountFeeVault,
-    TAccountController,
     TAccountClaimer,
     TAccountTreasury,
     TAccountTokenProgram,
@@ -318,12 +294,10 @@ export type ParsedClaimTokensInstruction<
     airdrop: TAccountMetas[2];
     bitmap: TAccountMetas[3];
     mint: TAccountMetas[4];
-    feeVault: TAccountMetas[5];
-    controller: TAccountMetas[6];
-    claimer: TAccountMetas[7];
-    treasury: TAccountMetas[8];
-    tokenProgram: TAccountMetas[9];
-    systemProgram: TAccountMetas[10];
+    claimer: TAccountMetas[5];
+    treasury: TAccountMetas[6];
+    tokenProgram: TAccountMetas[7];
+    systemProgram: TAccountMetas[8];
   };
   data: ClaimTokensInstructionData;
 };
@@ -336,7 +310,7 @@ export function parseClaimTokensInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedClaimTokensInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 11) {
+  if (instruction.accounts.length < 9) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -354,8 +328,6 @@ export function parseClaimTokensInstruction<
       airdrop: getNextAccount(),
       bitmap: getNextAccount(),
       mint: getNextAccount(),
-      feeVault: getNextAccount(),
-      controller: getNextAccount(),
       claimer: getNextAccount(),
       treasury: getNextAccount(),
       tokenProgram: getNextAccount(),

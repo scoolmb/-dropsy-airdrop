@@ -13,3 +13,5 @@ export * from './depositTokens';
 export * from './initializeAirdrop';
 export * from './initializeBitmap';
 export * from './initializeController';
+export * from './initializeMaster';
+export * from './withdrawControllerFees';

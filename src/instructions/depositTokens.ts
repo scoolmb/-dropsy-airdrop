@@ -51,7 +51,7 @@ export type DepositTokensInstruction<
   TAccountVault extends string | IAccountMeta<string> = string,
   TAccountAirdrop extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
+  TAccountAuthority extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
     | IAccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
@@ -72,10 +72,10 @@ export type DepositTokensInstruction<
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
-      TAccountOwner extends string
-        ? ReadonlySignerAccount<TAccountOwner> &
-            IAccountSignerMeta<TAccountOwner>
-        : TAccountOwner,
+      TAccountAuthority extends string
+        ? ReadonlySignerAccount<TAccountAuthority> &
+            IAccountSignerMeta<TAccountAuthority>
+        : TAccountAuthority,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -122,14 +122,14 @@ export type DepositTokensInput<
   TAccountVault extends string = string,
   TAccountAirdrop extends string = string,
   TAccountMint extends string = string,
-  TAccountOwner extends string = string,
+  TAccountAuthority extends string = string,
   TAccountTokenProgram extends string = string,
 > = {
   sourceTokenAccount: Address<TAccountSourceTokenAccount>;
   vault: Address<TAccountVault>;
   airdrop: Address<TAccountAirdrop>;
   mint: Address<TAccountMint>;
-  owner: TransactionSigner<TAccountOwner>;
+  authority: TransactionSigner<TAccountAuthority>;
   tokenProgram?: Address<TAccountTokenProgram>;
   amount: DepositTokensInstructionDataArgs['amount'];
 };
@@ -139,7 +139,7 @@ export function getDepositTokensInstruction<
   TAccountVault extends string,
   TAccountAirdrop extends string,
   TAccountMint extends string,
-  TAccountOwner extends string,
+  TAccountAuthority extends string,
   TAccountTokenProgram extends string,
   TProgramAddress extends Address = typeof DROPSY_PROGRAM_ADDRESS,
 >(
@@ -148,7 +148,7 @@ export function getDepositTokensInstruction<
     TAccountVault,
     TAccountAirdrop,
     TAccountMint,
-    TAccountOwner,
+    TAccountAuthority,
     TAccountTokenProgram
   >,
   config?: { programAddress?: TProgramAddress }
@@ -158,7 +158,7 @@ export function getDepositTokensInstruction<
   TAccountVault,
   TAccountAirdrop,
   TAccountMint,
-  TAccountOwner,
+  TAccountAuthority,
   TAccountTokenProgram
 > {
   // Program address.
@@ -173,7 +173,7 @@ export function getDepositTokensInstruction<
     vault: { value: input.vault ?? null, isWritable: true },
     airdrop: { value: input.airdrop ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
-    owner: { value: input.owner ?? null, isWritable: false },
+    authority: { value: input.authority ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -197,7 +197,7 @@ export function getDepositTokensInstruction<
       getAccountMeta(accounts.vault),
       getAccountMeta(accounts.airdrop),
       getAccountMeta(accounts.mint),
-      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.authority),
       getAccountMeta(accounts.tokenProgram),
     ],
     programAddress,
@@ -210,7 +210,7 @@ export function getDepositTokensInstruction<
     TAccountVault,
     TAccountAirdrop,
     TAccountMint,
-    TAccountOwner,
+    TAccountAuthority,
     TAccountTokenProgram
   >;
 
@@ -227,7 +227,7 @@ export type ParsedDepositTokensInstruction<
     vault: TAccountMetas[1];
     airdrop: TAccountMetas[2];
     mint: TAccountMetas[3];
-    owner: TAccountMetas[4];
+    authority: TAccountMetas[4];
     tokenProgram: TAccountMetas[5];
   };
   data: DepositTokensInstructionData;
@@ -258,7 +258,7 @@ export function parseDepositTokensInstruction<
       vault: getNextAccount(),
       airdrop: getNextAccount(),
       mint: getNextAccount(),
-      owner: getNextAccount(),
+      authority: getNextAccount(),
       tokenProgram: getNextAccount(),
     },
     data: getDepositTokensInstructionDataDecoder().decode(instruction.data),

@@ -49,31 +49,33 @@ export function getControllerDiscriminatorBytes() {
 
 export type Controller = {
   discriminator: ReadonlyUint8Array;
-  /** the controller authority */
+  /** the controller authority    //  32 */
   authority: Address;
-  /** Fee vault address (should be system-owned) */
+  /** Fee vault address derived from authority publicKey // 32 */
   feeVault: Address;
-  /** Fee amount (in lamports) to create an airdrop using this controller */
-  createFee: bigint;
-  /** Fee amount (in lamports) to claim an airdrop created with this controller */
-  claimFee: bigint;
+  /** Fee amount (in lamports) to create or close an airdrop using this controller //8 */
+  feeLamports: bigint;
+  /** version for a controller for upcoming upgrades // 1 */
   version: number;
-  /** PDA bump seed */
+  /** PDA bump seed  // 1 */
   bump: number;
+  /** fee vault bump seed  // 1 */
+  feeVaultBump: number;
 };
 
 export type ControllerArgs = {
-  /** the controller authority */
+  /** the controller authority    //  32 */
   authority: Address;
-  /** Fee vault address (should be system-owned) */
+  /** Fee vault address derived from authority publicKey // 32 */
   feeVault: Address;
-  /** Fee amount (in lamports) to create an airdrop using this controller */
-  createFee: number | bigint;
-  /** Fee amount (in lamports) to claim an airdrop created with this controller */
-  claimFee: number | bigint;
+  /** Fee amount (in lamports) to create or close an airdrop using this controller //8 */
+  feeLamports: number | bigint;
+  /** version for a controller for upcoming upgrades // 1 */
   version: number;
-  /** PDA bump seed */
+  /** PDA bump seed  // 1 */
   bump: number;
+  /** fee vault bump seed  // 1 */
+  feeVaultBump: number;
 };
 
 export function getControllerEncoder(): Encoder<ControllerArgs> {
@@ -82,10 +84,10 @@ export function getControllerEncoder(): Encoder<ControllerArgs> {
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['authority', getAddressEncoder()],
       ['feeVault', getAddressEncoder()],
-      ['createFee', getU64Encoder()],
-      ['claimFee', getU64Encoder()],
+      ['feeLamports', getU64Encoder()],
       ['version', getU8Encoder()],
       ['bump', getU8Encoder()],
+      ['feeVaultBump', getU8Encoder()],
     ]),
     (value) => ({ ...value, discriminator: CONTROLLER_DISCRIMINATOR })
   );
@@ -96,10 +98,10 @@ export function getControllerDecoder(): Decoder<Controller> {
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['authority', getAddressDecoder()],
     ['feeVault', getAddressDecoder()],
-    ['createFee', getU64Decoder()],
-    ['claimFee', getU64Decoder()],
+    ['feeLamports', getU64Decoder()],
     ['version', getU8Decoder()],
     ['bump', getU8Decoder()],
+    ['feeVaultBump', getU8Decoder()],
   ]);
 }
 

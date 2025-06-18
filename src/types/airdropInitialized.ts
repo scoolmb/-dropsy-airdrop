@@ -27,9 +27,9 @@ import {
 export type AirdropInitialized = {
   airdrop: Address;
   mint: Address;
-  owner: Address;
+  authority: Address;
   controller: Address;
-  controllerAuthority: Address;
+  controllerFeeVault: Address;
   merkleRoot: Array<number>;
   startTime: bigint;
   endTime: bigint;
@@ -39,9 +39,9 @@ export type AirdropInitialized = {
 export type AirdropInitializedArgs = {
   airdrop: Address;
   mint: Address;
-  owner: Address;
+  authority: Address;
   controller: Address;
-  controllerAuthority: Address;
+  controllerFeeVault: Address;
   merkleRoot: Array<number>;
   startTime: number | bigint;
   endTime: number | bigint;
@@ -52,9 +52,9 @@ export function getAirdropInitializedEncoder(): Encoder<AirdropInitializedArgs> 
   return getStructEncoder([
     ['airdrop', getAddressEncoder()],
     ['mint', getAddressEncoder()],
-    ['owner', getAddressEncoder()],
+    ['authority', getAddressEncoder()],
     ['controller', getAddressEncoder()],
-    ['controllerAuthority', getAddressEncoder()],
+    ['controllerFeeVault', getAddressEncoder()],
     ['merkleRoot', getArrayEncoder(getU8Encoder(), { size: 32 })],
     ['startTime', getI64Encoder()],
     ['endTime', getI64Encoder()],
@@ -66,9 +66,9 @@ export function getAirdropInitializedDecoder(): Decoder<AirdropInitialized> {
   return getStructDecoder([
     ['airdrop', getAddressDecoder()],
     ['mint', getAddressDecoder()],
-    ['owner', getAddressDecoder()],
+    ['authority', getAddressDecoder()],
     ['controller', getAddressDecoder()],
-    ['controllerAuthority', getAddressDecoder()],
+    ['controllerFeeVault', getAddressDecoder()],
     ['merkleRoot', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['startTime', getI64Decoder()],
     ['endTime', getI64Decoder()],

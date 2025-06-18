@@ -10,8 +10,10 @@ import {
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
+  getAddressEncoder,
   getBytesDecoder,
   getBytesEncoder,
+  getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
   transformEncoder,
@@ -29,9 +31,13 @@ import {
   type TransactionSigner,
   type WritableAccount,
   type WritableSignerAccount,
-} from "@solana/kit";
-import { DROPSY_PROGRAM_ADDRESS } from "../programs";
-import { getAccountMetaFactory, type ResolvedAccount } from "../shared";
+} from '@solana/kit';
+import { DROPSY_PROGRAM_ADDRESS } from '../programs';
+import {
+  expectAddress,
+  getAccountMetaFactory,
+  type ResolvedAccount,
+} from '../shared';
 
 export const CLOSE_AIRDROP_DISCRIMINATOR = new Uint8Array([
   85, 138, 99, 129, 104, 203, 94, 4,
@@ -45,21 +51,36 @@ export function getCloseAirdropDiscriminatorBytes() {
 
 export type CloseAirdropInstruction<
   TProgram extends string = typeof DROPSY_PROGRAM_ADDRESS,
+  TAccountStats extends string | IAccountMeta<string> = string,
+  TAccountController extends string | IAccountMeta<string> = string,
+  TAccountFeeVault extends string | IAccountMeta<string> = string,
   TAccountAirdrop extends string | IAccountMeta<string> = string,
   TAccountVault extends string | IAccountMeta<string> = string,
   TAccountDestinationTokenAccount extends
     | string
     | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
+  TAccountAuthority extends string | IAccountMeta<string> = string,
   TAccountMint extends string | IAccountMeta<string> = string,
   TAccountTokenProgram extends
     | string
-    | IAccountMeta<string> = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
-  TRemainingAccounts extends readonly IAccountMeta<string>[] = []
+    | IAccountMeta<string> = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
+  TAccountSystemProgram extends
+    | string
+    | IAccountMeta<string> = '11111111111111111111111111111111',
+  TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
+      TAccountStats extends string
+        ? WritableAccount<TAccountStats>
+        : TAccountStats,
+      TAccountController extends string
+        ? WritableAccount<TAccountController>
+        : TAccountController,
+      TAccountFeeVault extends string
+        ? WritableAccount<TAccountFeeVault>
+        : TAccountFeeVault,
       TAccountAirdrop extends string
         ? WritableAccount<TAccountAirdrop>
         : TAccountAirdrop,
@@ -69,17 +90,20 @@ export type CloseAirdropInstruction<
       TAccountDestinationTokenAccount extends string
         ? WritableAccount<TAccountDestinationTokenAccount>
         : TAccountDestinationTokenAccount,
-      TAccountOwner extends string
-        ? WritableSignerAccount<TAccountOwner> &
-            IAccountSignerMeta<TAccountOwner>
-        : TAccountOwner,
+      TAccountAuthority extends string
+        ? WritableSignerAccount<TAccountAuthority> &
+            IAccountSignerMeta<TAccountAuthority>
+        : TAccountAuthority,
       TAccountMint extends string
         ? ReadonlyAccount<TAccountMint>
         : TAccountMint,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
-      ...TRemainingAccounts
+      TAccountSystemProgram extends string
+        ? ReadonlyAccount<TAccountSystemProgram>
+        : TAccountSystemProgram,
+      ...TRemainingAccounts,
     ]
   >;
 
@@ -89,14 +113,14 @@ export type CloseAirdropInstructionDataArgs = {};
 
 export function getCloseAirdropInstructionDataEncoder(): Encoder<CloseAirdropInstructionDataArgs> {
   return transformEncoder(
-    getStructEncoder([["discriminator", fixEncoderSize(getBytesEncoder(), 8)]]),
+    getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)]]),
     (value) => ({ ...value, discriminator: CLOSE_AIRDROP_DISCRIMINATOR })
   );
 }
 
 export function getCloseAirdropInstructionDataDecoder(): Decoder<CloseAirdropInstructionData> {
   return getStructDecoder([
-    ["discriminator", fixDecoderSize(getBytesDecoder(), 8)],
+    ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
   ]);
 }
 
@@ -110,63 +134,236 @@ export function getCloseAirdropInstructionDataCodec(): Codec<
   );
 }
 
-export type CloseAirdropInput<
+export type CloseAirdropAsyncInput<
+  TAccountStats extends string = string,
+  TAccountController extends string = string,
+  TAccountFeeVault extends string = string,
   TAccountAirdrop extends string = string,
   TAccountVault extends string = string,
   TAccountDestinationTokenAccount extends string = string,
-  TAccountOwner extends string = string,
+  TAccountAuthority extends string = string,
   TAccountMint extends string = string,
-  TAccountTokenProgram extends string = string
+  TAccountTokenProgram extends string = string,
+  TAccountSystemProgram extends string = string,
 > = {
+  stats?: Address<TAccountStats>;
+  controller: Address<TAccountController>;
+  feeVault?: Address<TAccountFeeVault>;
   airdrop: Address<TAccountAirdrop>;
   vault: Address<TAccountVault>;
   destinationTokenAccount: Address<TAccountDestinationTokenAccount>;
-  owner: TransactionSigner<TAccountOwner>;
+  authority: TransactionSigner<TAccountAuthority>;
   mint: Address<TAccountMint>;
   tokenProgram?: Address<TAccountTokenProgram>;
+  systemProgram?: Address<TAccountSystemProgram>;
 };
 
-export function getCloseAirdropInstruction<
+export async function getCloseAirdropInstructionAsync<
+  TAccountStats extends string,
+  TAccountController extends string,
+  TAccountFeeVault extends string,
   TAccountAirdrop extends string,
   TAccountVault extends string,
   TAccountDestinationTokenAccount extends string,
-  TAccountOwner extends string,
+  TAccountAuthority extends string,
   TAccountMint extends string,
   TAccountTokenProgram extends string,
-  TProgramAddress extends Address = typeof DROPSY_PROGRAM_ADDRESS
+  TAccountSystemProgram extends string,
+  TProgramAddress extends Address = typeof DROPSY_PROGRAM_ADDRESS,
 >(
-  input: CloseAirdropInput<
+  input: CloseAirdropAsyncInput<
+    TAccountStats,
+    TAccountController,
+    TAccountFeeVault,
     TAccountAirdrop,
     TAccountVault,
     TAccountDestinationTokenAccount,
-    TAccountOwner,
+    TAccountAuthority,
     TAccountMint,
-    TAccountTokenProgram
+    TAccountTokenProgram,
+    TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): CloseAirdropInstruction<
-  TProgramAddress,
-  TAccountAirdrop,
-  TAccountVault,
-  TAccountDestinationTokenAccount,
-  TAccountOwner,
-  TAccountMint,
-  TAccountTokenProgram
+): Promise<
+  CloseAirdropInstruction<
+    TProgramAddress,
+    TAccountStats,
+    TAccountController,
+    TAccountFeeVault,
+    TAccountAirdrop,
+    TAccountVault,
+    TAccountDestinationTokenAccount,
+    TAccountAuthority,
+    TAccountMint,
+    TAccountTokenProgram,
+    TAccountSystemProgram
+  >
 > {
   // Program address.
   const programAddress = config?.programAddress ?? DROPSY_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
+    stats: { value: input.stats ?? null, isWritable: true },
+    controller: { value: input.controller ?? null, isWritable: true },
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
     airdrop: { value: input.airdrop ?? null, isWritable: true },
     vault: { value: input.vault ?? null, isWritable: true },
     destinationTokenAccount: {
       value: input.destinationTokenAccount ?? null,
       isWritable: true,
     },
-    owner: { value: input.owner ?? null, isWritable: true },
+    authority: { value: input.authority ?? null, isWritable: true },
     mint: { value: input.mint ?? null, isWritable: false },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
+  };
+  const accounts = originalAccounts as Record<
+    keyof typeof originalAccounts,
+    ResolvedAccount
+  >;
+
+  // Resolve default values.
+  if (!accounts.stats.value) {
+    accounts.stats.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(new Uint8Array([115, 116, 97, 116, 115])),
+      ],
+    });
+  }
+  if (!accounts.feeVault.value) {
+    accounts.feeVault.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(new Uint8Array([118, 97, 117, 108, 116])),
+        getAddressEncoder().encode(expectAddress(accounts.controller.value)),
+      ],
+    });
+  }
+  if (!accounts.tokenProgram.value) {
+    accounts.tokenProgram.value =
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
+  }
+
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const instruction = {
+    accounts: [
+      getAccountMeta(accounts.stats),
+      getAccountMeta(accounts.controller),
+      getAccountMeta(accounts.feeVault),
+      getAccountMeta(accounts.airdrop),
+      getAccountMeta(accounts.vault),
+      getAccountMeta(accounts.destinationTokenAccount),
+      getAccountMeta(accounts.authority),
+      getAccountMeta(accounts.mint),
+      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.systemProgram),
+    ],
+    programAddress,
+    data: getCloseAirdropInstructionDataEncoder().encode({}),
+  } as CloseAirdropInstruction<
+    TProgramAddress,
+    TAccountStats,
+    TAccountController,
+    TAccountFeeVault,
+    TAccountAirdrop,
+    TAccountVault,
+    TAccountDestinationTokenAccount,
+    TAccountAuthority,
+    TAccountMint,
+    TAccountTokenProgram,
+    TAccountSystemProgram
+  >;
+
+  return instruction;
+}
+
+export type CloseAirdropInput<
+  TAccountStats extends string = string,
+  TAccountController extends string = string,
+  TAccountFeeVault extends string = string,
+  TAccountAirdrop extends string = string,
+  TAccountVault extends string = string,
+  TAccountDestinationTokenAccount extends string = string,
+  TAccountAuthority extends string = string,
+  TAccountMint extends string = string,
+  TAccountTokenProgram extends string = string,
+  TAccountSystemProgram extends string = string,
+> = {
+  stats: Address<TAccountStats>;
+  controller: Address<TAccountController>;
+  feeVault: Address<TAccountFeeVault>;
+  airdrop: Address<TAccountAirdrop>;
+  vault: Address<TAccountVault>;
+  destinationTokenAccount: Address<TAccountDestinationTokenAccount>;
+  authority: TransactionSigner<TAccountAuthority>;
+  mint: Address<TAccountMint>;
+  tokenProgram?: Address<TAccountTokenProgram>;
+  systemProgram?: Address<TAccountSystemProgram>;
+};
+
+export function getCloseAirdropInstruction<
+  TAccountStats extends string,
+  TAccountController extends string,
+  TAccountFeeVault extends string,
+  TAccountAirdrop extends string,
+  TAccountVault extends string,
+  TAccountDestinationTokenAccount extends string,
+  TAccountAuthority extends string,
+  TAccountMint extends string,
+  TAccountTokenProgram extends string,
+  TAccountSystemProgram extends string,
+  TProgramAddress extends Address = typeof DROPSY_PROGRAM_ADDRESS,
+>(
+  input: CloseAirdropInput<
+    TAccountStats,
+    TAccountController,
+    TAccountFeeVault,
+    TAccountAirdrop,
+    TAccountVault,
+    TAccountDestinationTokenAccount,
+    TAccountAuthority,
+    TAccountMint,
+    TAccountTokenProgram,
+    TAccountSystemProgram
+  >,
+  config?: { programAddress?: TProgramAddress }
+): CloseAirdropInstruction<
+  TProgramAddress,
+  TAccountStats,
+  TAccountController,
+  TAccountFeeVault,
+  TAccountAirdrop,
+  TAccountVault,
+  TAccountDestinationTokenAccount,
+  TAccountAuthority,
+  TAccountMint,
+  TAccountTokenProgram,
+  TAccountSystemProgram
+> {
+  // Program address.
+  const programAddress = config?.programAddress ?? DROPSY_PROGRAM_ADDRESS;
+
+  // Original accounts.
+  const originalAccounts = {
+    stats: { value: input.stats ?? null, isWritable: true },
+    controller: { value: input.controller ?? null, isWritable: true },
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
+    airdrop: { value: input.airdrop ?? null, isWritable: true },
+    vault: { value: input.vault ?? null, isWritable: true },
+    destinationTokenAccount: {
+      value: input.destinationTokenAccount ?? null,
+      isWritable: true,
+    },
+    authority: { value: input.authority ?? null, isWritable: true },
+    mint: { value: input.mint ?? null, isWritable: false },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -176,29 +373,41 @@ export function getCloseAirdropInstruction<
   // Resolve default values.
   if (!accounts.tokenProgram.value) {
     accounts.tokenProgram.value =
-      "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb" as Address<"TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb">;
+      'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' as Address<'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'>;
+  }
+  if (!accounts.systemProgram.value) {
+    accounts.systemProgram.value =
+      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
 
-  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
+      getAccountMeta(accounts.stats),
+      getAccountMeta(accounts.controller),
+      getAccountMeta(accounts.feeVault),
       getAccountMeta(accounts.airdrop),
       getAccountMeta(accounts.vault),
       getAccountMeta(accounts.destinationTokenAccount),
-      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.authority),
       getAccountMeta(accounts.mint),
       getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
     data: getCloseAirdropInstructionDataEncoder().encode({}),
   } as CloseAirdropInstruction<
     TProgramAddress,
+    TAccountStats,
+    TAccountController,
+    TAccountFeeVault,
     TAccountAirdrop,
     TAccountVault,
     TAccountDestinationTokenAccount,
-    TAccountOwner,
+    TAccountAuthority,
     TAccountMint,
-    TAccountTokenProgram
+    TAccountTokenProgram,
+    TAccountSystemProgram
   >;
 
   return instruction;
@@ -206,31 +415,35 @@ export function getCloseAirdropInstruction<
 
 export type ParsedCloseAirdropInstruction<
   TProgram extends string = typeof DROPSY_PROGRAM_ADDRESS,
-  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[]
+  TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    airdrop: TAccountMetas[0];
-    vault: TAccountMetas[1];
-    destinationTokenAccount: TAccountMetas[2];
-    owner: TAccountMetas[3];
-    mint: TAccountMetas[4];
-    tokenProgram: TAccountMetas[5];
+    stats: TAccountMetas[0];
+    controller: TAccountMetas[1];
+    feeVault: TAccountMetas[2];
+    airdrop: TAccountMetas[3];
+    vault: TAccountMetas[4];
+    destinationTokenAccount: TAccountMetas[5];
+    authority: TAccountMetas[6];
+    mint: TAccountMetas[7];
+    tokenProgram: TAccountMetas[8];
+    systemProgram: TAccountMetas[9];
   };
   data: CloseAirdropInstructionData;
 };
 
 export function parseCloseAirdropInstruction<
   TProgram extends string,
-  TAccountMetas extends readonly IAccountMeta[]
+  TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedCloseAirdropInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 6) {
+  if (instruction.accounts.length < 10) {
     // TODO: Coded error.
-    throw new Error("Not enough accounts");
+    throw new Error('Not enough accounts');
   }
   let accountIndex = 0;
   const getNextAccount = () => {
@@ -241,12 +454,16 @@ export function parseCloseAirdropInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
+      stats: getNextAccount(),
+      controller: getNextAccount(),
+      feeVault: getNextAccount(),
       airdrop: getNextAccount(),
       vault: getNextAccount(),
       destinationTokenAccount: getNextAccount(),
-      owner: getNextAccount(),
+      authority: getNextAccount(),
       mint: getNextAccount(),
       tokenProgram: getNextAccount(),
+      systemProgram: getNextAccount(),
     },
     data: getCloseAirdropInstructionDataDecoder().decode(instruction.data),
   };

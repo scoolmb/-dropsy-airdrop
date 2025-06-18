@@ -53,9 +53,8 @@ export function getAirdropDiscriminatorBytes() {
 
 export type Airdrop = {
   discriminator: ReadonlyUint8Array;
-  id: bigint;
+  authority: Address;
   mint: Address;
-  owner: Address;
   controller: Address;
   supply: bigint;
   merkleRoot: Array<number>;
@@ -67,9 +66,8 @@ export type Airdrop = {
 };
 
 export type AirdropArgs = {
-  id: number | bigint;
+  authority: Address;
   mint: Address;
-  owner: Address;
   controller: Address;
   supply: number | bigint;
   merkleRoot: Array<number>;
@@ -84,9 +82,8 @@ export function getAirdropEncoder(): Encoder<AirdropArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      ['id', getU64Encoder()],
+      ['authority', getAddressEncoder()],
       ['mint', getAddressEncoder()],
-      ['owner', getAddressEncoder()],
       ['controller', getAddressEncoder()],
       ['supply', getU64Encoder()],
       ['merkleRoot', getArrayEncoder(getU8Encoder(), { size: 32 })],
@@ -103,9 +100,8 @@ export function getAirdropEncoder(): Encoder<AirdropArgs> {
 export function getAirdropDecoder(): Decoder<Airdrop> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    ['id', getU64Decoder()],
+    ['authority', getAddressDecoder()],
     ['mint', getAddressDecoder()],
-    ['owner', getAddressDecoder()],
     ['controller', getAddressDecoder()],
     ['supply', getU64Decoder()],
     ['merkleRoot', getArrayDecoder(getU8Decoder(), { size: 32 })],

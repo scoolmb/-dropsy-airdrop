@@ -53,7 +53,7 @@ export function getBitmapAccountDiscriminatorBytes() {
 
 export type BitmapAccount = {
   discriminator: ReadonlyUint8Array;
-  owner: Address;
+  authority: Address;
   airdrop: Address;
   claimedBitmap: ReadonlyUint8Array;
   id: number;
@@ -62,7 +62,7 @@ export type BitmapAccount = {
 };
 
 export type BitmapAccountArgs = {
-  owner: Address;
+  authority: Address;
   airdrop: Address;
   claimedBitmap: ReadonlyUint8Array;
   id: number;
@@ -74,7 +74,7 @@ export function getBitmapAccountEncoder(): Encoder<BitmapAccountArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      ['owner', getAddressEncoder()],
+      ['authority', getAddressEncoder()],
       ['airdrop', getAddressEncoder()],
       [
         'claimedBitmap',
@@ -91,7 +91,7 @@ export function getBitmapAccountEncoder(): Encoder<BitmapAccountArgs> {
 export function getBitmapAccountDecoder(): Decoder<BitmapAccount> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    ['owner', getAddressDecoder()],
+    ['authority', getAddressDecoder()],
     ['airdrop', getAddressDecoder()],
     ['claimedBitmap', addDecoderSizePrefix(getBytesDecoder(), getU32Decoder())],
     ['id', getU8Decoder()],

@@ -24,52 +24,56 @@ import {
   type Encoder,
 } from '@solana/kit';
 
-export type ControllerInitialized = {
-  masterVault: Address;
+export type MasterInitialized = {
   authority: Address;
   feeVault: Address;
-  feeLamports: bigint;
+  protocolFee: bigint;
+  initControllerFee: bigint;
+  withdrawFee: bigint;
   bump: number;
   timestamp: bigint;
 };
 
-export type ControllerInitializedArgs = {
-  masterVault: Address;
+export type MasterInitializedArgs = {
   authority: Address;
   feeVault: Address;
-  feeLamports: number | bigint;
+  protocolFee: number | bigint;
+  initControllerFee: number | bigint;
+  withdrawFee: number | bigint;
   bump: number;
   timestamp: number | bigint;
 };
 
-export function getControllerInitializedEncoder(): Encoder<ControllerInitializedArgs> {
+export function getMasterInitializedEncoder(): Encoder<MasterInitializedArgs> {
   return getStructEncoder([
-    ['masterVault', getAddressEncoder()],
     ['authority', getAddressEncoder()],
     ['feeVault', getAddressEncoder()],
-    ['feeLamports', getU64Encoder()],
+    ['protocolFee', getU64Encoder()],
+    ['initControllerFee', getU64Encoder()],
+    ['withdrawFee', getU64Encoder()],
     ['bump', getU8Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
 
-export function getControllerInitializedDecoder(): Decoder<ControllerInitialized> {
+export function getMasterInitializedDecoder(): Decoder<MasterInitialized> {
   return getStructDecoder([
-    ['masterVault', getAddressDecoder()],
     ['authority', getAddressDecoder()],
     ['feeVault', getAddressDecoder()],
-    ['feeLamports', getU64Decoder()],
+    ['protocolFee', getU64Decoder()],
+    ['initControllerFee', getU64Decoder()],
+    ['withdrawFee', getU64Decoder()],
     ['bump', getU8Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }
 
-export function getControllerInitializedCodec(): Codec<
-  ControllerInitializedArgs,
-  ControllerInitialized
+export function getMasterInitializedCodec(): Codec<
+  MasterInitializedArgs,
+  MasterInitialized
 > {
   return combineCodec(
-    getControllerInitializedEncoder(),
-    getControllerInitializedDecoder()
+    getMasterInitializedEncoder(),
+    getMasterInitializedDecoder()
   );
 }

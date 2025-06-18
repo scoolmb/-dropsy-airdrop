@@ -42,11 +42,60 @@ Command-line airdrop management
 
 ```bash
 npm install @dropsy/airdrop
-# ora
+# or
 yarn add @dropsy/airdrop
 # or
 pnpm add @dropsy/airdrop
 ```
+
+The @solana/kit is required if not already installed:
+
+# Using npm
+
+npm install @solana/kit
+
+# Using yarn
+
+yarn add @solana/kit
+
+## Examples
+
+Examples are available in the [examples](./examples) folder.  
+Feel free to explore, modify, and use them as a starting point for your own work.
+
+## Features
+
+🚀 Controller – The Heart of Your Airdrop Platform
+One of the most exciting parts of our protocol is the Controller.
+
+A Controller acts as the foundation for creating and managing airdrops. By initializing your own controller, you can build a fully self-managed airdrop platform — and alse earn protocol fees from all the airdrops created using it.
+
+What is a Controller?
+A Controller is a special on-chain account that:
+
+Registers ownership over a set of airdrops.
+
+Collects protocol-level fees.
+
+Allows anyone to create token airdrops under your control.
+
+Why Use a Controller?
+
+💸 Monetize: Earn fees from every airdrop created using your controller.
+
+🛠️ Customize: Tailor your airdrop platform around it.
+
+🌐 Permissionless: Anyone can initialize a controller and start building.
+
+How to Initialize a Controller :
+
+import \* as dropsy from "@dropsy/airdrop";
+
+// Create the instruction to initialize your controller
+const ix = await dropsy.getInitializeControllerInstructionAsync({
+authority: wallet, // the owner of the controller (the signer )
+feeLamports: BigInt(5000), // The fee lamports others will pay when c using your controller
+});
 
 ## 📚 Documentation
 

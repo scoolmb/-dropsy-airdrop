@@ -1,7 +1,7 @@
 {
   "name": "@dropsy/airdrop",
   "version": "0.0.1",
-  "description": "this is just a test package ",
+  "description": "Dropsy - The On-Chain Airdrop Protocol for Solana",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -13,6 +13,7 @@
     "url": "https://github.com/dropsy/airdrop"
   },
   "scripts": {
+    "test": "ts-node index.ts",
     "build": "tsup"
   },
   "keywords": [
@@ -21,7 +22,23 @@
     "web3",
     "create airdrop",
     "solana web3",
-    "dropsy"
+    "dropsy",
+    "solana devtools",
+    "token distribution",
+    "airdrop protocol",
+    "solana sdk",
+    "merkle airdrop",
+    "gasless airdrop",
+    "solana token launch",
+    "nft airdrop",
+    "decentralized distribution",
+    "solana-program-library",
+    "anchor program",
+    "spl token",
+    "solana crypto",
+    "airdrop automation",
+    "web3 rewards",
+    "solana developer tools"
   ],
   "author": "MBK Official",
   "license": "MIT",
@@ -32,6 +49,8 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@solana/kit": "^2.1.1"
+    "@solana-program/token": "^0.5.1",
+    "@solana/kit": "^2.1.1",
+    "merkletreejs": "^0.5.2"
   }
 }

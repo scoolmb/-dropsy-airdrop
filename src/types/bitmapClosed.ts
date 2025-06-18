@@ -21,7 +21,7 @@ import {
 export type BitmapClosed = {
   airdrop: Address;
   bitmap: Address;
-  owner: Address;
+  authority: Address;
 };
 
 export type BitmapClosedArgs = BitmapClosed;
@@ -30,7 +30,7 @@ export function getBitmapClosedEncoder(): Encoder<BitmapClosedArgs> {
   return getStructEncoder([
     ['airdrop', getAddressEncoder()],
     ['bitmap', getAddressEncoder()],
-    ['owner', getAddressEncoder()],
+    ['authority', getAddressEncoder()],
   ]);
 }
 
@@ -38,7 +38,7 @@ export function getBitmapClosedDecoder(): Decoder<BitmapClosed> {
   return getStructDecoder([
     ['airdrop', getAddressDecoder()],
     ['bitmap', getAddressDecoder()],
-    ['owner', getAddressDecoder()],
+    ['authority', getAddressDecoder()],
   ]);
 }
 

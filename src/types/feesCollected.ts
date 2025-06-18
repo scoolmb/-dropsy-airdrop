@@ -14,43 +14,53 @@ import {
   getI64Encoder,
   getStructDecoder,
   getStructEncoder,
+  getU64Decoder,
+  getU64Encoder,
   type Address,
   type Codec,
   type Decoder,
   type Encoder,
 } from '@solana/kit';
 
-export type AirdropClosed = {
-  airdrop: Address;
+export type FeesCollected = {
+  controller: Address;
   authority: Address;
+  feeVault: Address;
+  amount: bigint;
   timestamp: bigint;
 };
 
-export type AirdropClosedArgs = {
-  airdrop: Address;
+export type FeesCollectedArgs = {
+  controller: Address;
   authority: Address;
+  feeVault: Address;
+  amount: number | bigint;
   timestamp: number | bigint;
 };
 
-export function getAirdropClosedEncoder(): Encoder<AirdropClosedArgs> {
+export function getFeesCollectedEncoder(): Encoder<FeesCollectedArgs> {
   return getStructEncoder([
-    ['airdrop', getAddressEncoder()],
+    ['controller', getAddressEncoder()],
     ['authority', getAddressEncoder()],
+    ['feeVault', getAddressEncoder()],
+    ['amount', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
 
-export function getAirdropClosedDecoder(): Decoder<AirdropClosed> {
+export function getFeesCollectedDecoder(): Decoder<FeesCollected> {
   return getStructDecoder([
-    ['airdrop', getAddressDecoder()],
+    ['controller', getAddressDecoder()],
     ['authority', getAddressDecoder()],
+    ['feeVault', getAddressDecoder()],
+    ['amount', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }
 
-export function getAirdropClosedCodec(): Codec<
-  AirdropClosedArgs,
-  AirdropClosed
+export function getFeesCollectedCodec(): Codec<
+  FeesCollectedArgs,
+  FeesCollected
 > {
-  return combineCodec(getAirdropClosedEncoder(), getAirdropClosedDecoder());
+  return combineCodec(getFeesCollectedEncoder(), getFeesCollectedDecoder());
 }

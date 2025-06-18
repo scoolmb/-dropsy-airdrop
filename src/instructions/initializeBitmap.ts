@@ -56,9 +56,14 @@ export function getInitializeBitmapDiscriminatorBytes() {
 
 export type InitializeBitmapInstruction<
   TProgram extends string = typeof DROPSY_PROGRAM_ADDRESS,
+  TAccountMaster extends string | IAccountMeta<string> = string,
+  TAccountStats extends string | IAccountMeta<string> = string,
   TAccountBitmap extends string | IAccountMeta<string> = string,
   TAccountAirdrop extends string | IAccountMeta<string> = string,
-  TAccountOwner extends string | IAccountMeta<string> = string,
+  TAccountTreasury extends
+    | string
+    | IAccountMeta<string> = 'DHffy4rNMtuL8VKgyBEay4jcq8AYHyoAzxLKU6aEijUV',
+  TAccountAuthority extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
@@ -67,16 +72,25 @@ export type InitializeBitmapInstruction<
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
+      TAccountMaster extends string
+        ? ReadonlyAccount<TAccountMaster>
+        : TAccountMaster,
+      TAccountStats extends string
+        ? WritableAccount<TAccountStats>
+        : TAccountStats,
       TAccountBitmap extends string
         ? WritableAccount<TAccountBitmap>
         : TAccountBitmap,
       TAccountAirdrop extends string
         ? WritableAccount<TAccountAirdrop>
         : TAccountAirdrop,
-      TAccountOwner extends string
-        ? WritableSignerAccount<TAccountOwner> &
-            IAccountSignerMeta<TAccountOwner>
-        : TAccountOwner,
+      TAccountTreasury extends string
+        ? WritableAccount<TAccountTreasury>
+        : TAccountTreasury,
+      TAccountAuthority extends string
+        ? WritableSignerAccount<TAccountAuthority> &
+            IAccountSignerMeta<TAccountAuthority>
+        : TAccountAuthority,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -125,39 +139,54 @@ export function getInitializeBitmapInstructionDataCodec(): Codec<
 }
 
 export type InitializeBitmapAsyncInput<
+  TAccountMaster extends string = string,
+  TAccountStats extends string = string,
   TAccountBitmap extends string = string,
   TAccountAirdrop extends string = string,
-  TAccountOwner extends string = string,
+  TAccountTreasury extends string = string,
+  TAccountAuthority extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
+  master?: Address<TAccountMaster>;
+  stats?: Address<TAccountStats>;
   bitmap?: Address<TAccountBitmap>;
   airdrop: Address<TAccountAirdrop>;
-  owner: TransactionSigner<TAccountOwner>;
+  treasury?: Address<TAccountTreasury>;
+  authority: TransactionSigner<TAccountAuthority>;
   systemProgram?: Address<TAccountSystemProgram>;
   id: InitializeBitmapInstructionDataArgs['id'];
   total: InitializeBitmapInstructionDataArgs['total'];
 };
 
 export async function getInitializeBitmapInstructionAsync<
+  TAccountMaster extends string,
+  TAccountStats extends string,
   TAccountBitmap extends string,
   TAccountAirdrop extends string,
-  TAccountOwner extends string,
+  TAccountTreasury extends string,
+  TAccountAuthority extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof DROPSY_PROGRAM_ADDRESS,
 >(
   input: InitializeBitmapAsyncInput<
+    TAccountMaster,
+    TAccountStats,
     TAccountBitmap,
     TAccountAirdrop,
-    TAccountOwner,
+    TAccountTreasury,
+    TAccountAuthority,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
   InitializeBitmapInstruction<
     TProgramAddress,
+    TAccountMaster,
+    TAccountStats,
     TAccountBitmap,
     TAccountAirdrop,
-    TAccountOwner,
+    TAccountTreasury,
+    TAccountAuthority,
     TAccountSystemProgram
   >
 > {
@@ -166,9 +195,12 @@ export async function getInitializeBitmapInstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
+    master: { value: input.master ?? null, isWritable: false },
+    stats: { value: input.stats ?? null, isWritable: true },
     bitmap: { value: input.bitmap ?? null, isWritable: true },
     airdrop: { value: input.airdrop ?? null, isWritable: true },
-    owner: { value: input.owner ?? null, isWritable: true },
+    treasury: { value: input.treasury ?? null, isWritable: true },
+    authority: { value: input.authority ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -180,6 +212,24 @@ export async function getInitializeBitmapInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.master.value) {
+    accounts.master.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(
+          new Uint8Array([109, 97, 115, 116, 101, 114, 51])
+        ),
+      ],
+    });
+  }
+  if (!accounts.stats.value) {
+    accounts.stats.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(new Uint8Array([115, 116, 97, 116, 115])),
+      ],
+    });
+  }
   if (!accounts.bitmap.value) {
     accounts.bitmap.value = await getProgramDerivedAddress({
       programAddress,
@@ -190,6 +240,10 @@ export async function getInitializeBitmapInstructionAsync<
       ],
     });
   }
+  if (!accounts.treasury.value) {
+    accounts.treasury.value =
+      'DHffy4rNMtuL8VKgyBEay4jcq8AYHyoAzxLKU6aEijUV' as Address<'DHffy4rNMtuL8VKgyBEay4jcq8AYHyoAzxLKU6aEijUV'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
@@ -198,9 +252,12 @@ export async function getInitializeBitmapInstructionAsync<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
+      getAccountMeta(accounts.master),
+      getAccountMeta(accounts.stats),
       getAccountMeta(accounts.bitmap),
       getAccountMeta(accounts.airdrop),
-      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.treasury),
+      getAccountMeta(accounts.authority),
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
@@ -209,9 +266,12 @@ export async function getInitializeBitmapInstructionAsync<
     ),
   } as InitializeBitmapInstruction<
     TProgramAddress,
+    TAccountMaster,
+    TAccountStats,
     TAccountBitmap,
     TAccountAirdrop,
-    TAccountOwner,
+    TAccountTreasury,
+    TAccountAuthority,
     TAccountSystemProgram
   >;
 
@@ -219,38 +279,53 @@ export async function getInitializeBitmapInstructionAsync<
 }
 
 export type InitializeBitmapInput<
+  TAccountMaster extends string = string,
+  TAccountStats extends string = string,
   TAccountBitmap extends string = string,
   TAccountAirdrop extends string = string,
-  TAccountOwner extends string = string,
+  TAccountTreasury extends string = string,
+  TAccountAuthority extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
+  master: Address<TAccountMaster>;
+  stats: Address<TAccountStats>;
   bitmap: Address<TAccountBitmap>;
   airdrop: Address<TAccountAirdrop>;
-  owner: TransactionSigner<TAccountOwner>;
+  treasury?: Address<TAccountTreasury>;
+  authority: TransactionSigner<TAccountAuthority>;
   systemProgram?: Address<TAccountSystemProgram>;
   id: InitializeBitmapInstructionDataArgs['id'];
   total: InitializeBitmapInstructionDataArgs['total'];
 };
 
 export function getInitializeBitmapInstruction<
+  TAccountMaster extends string,
+  TAccountStats extends string,
   TAccountBitmap extends string,
   TAccountAirdrop extends string,
-  TAccountOwner extends string,
+  TAccountTreasury extends string,
+  TAccountAuthority extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof DROPSY_PROGRAM_ADDRESS,
 >(
   input: InitializeBitmapInput<
+    TAccountMaster,
+    TAccountStats,
     TAccountBitmap,
     TAccountAirdrop,
-    TAccountOwner,
+    TAccountTreasury,
+    TAccountAuthority,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
 ): InitializeBitmapInstruction<
   TProgramAddress,
+  TAccountMaster,
+  TAccountStats,
   TAccountBitmap,
   TAccountAirdrop,
-  TAccountOwner,
+  TAccountTreasury,
+  TAccountAuthority,
   TAccountSystemProgram
 > {
   // Program address.
@@ -258,9 +333,12 @@ export function getInitializeBitmapInstruction<
 
   // Original accounts.
   const originalAccounts = {
+    master: { value: input.master ?? null, isWritable: false },
+    stats: { value: input.stats ?? null, isWritable: true },
     bitmap: { value: input.bitmap ?? null, isWritable: true },
     airdrop: { value: input.airdrop ?? null, isWritable: true },
-    owner: { value: input.owner ?? null, isWritable: true },
+    treasury: { value: input.treasury ?? null, isWritable: true },
+    authority: { value: input.authority ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -272,6 +350,10 @@ export function getInitializeBitmapInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.treasury.value) {
+    accounts.treasury.value =
+      'DHffy4rNMtuL8VKgyBEay4jcq8AYHyoAzxLKU6aEijUV' as Address<'DHffy4rNMtuL8VKgyBEay4jcq8AYHyoAzxLKU6aEijUV'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
@@ -280,9 +362,12 @@ export function getInitializeBitmapInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
+      getAccountMeta(accounts.master),
+      getAccountMeta(accounts.stats),
       getAccountMeta(accounts.bitmap),
       getAccountMeta(accounts.airdrop),
-      getAccountMeta(accounts.owner),
+      getAccountMeta(accounts.treasury),
+      getAccountMeta(accounts.authority),
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
@@ -291,9 +376,12 @@ export function getInitializeBitmapInstruction<
     ),
   } as InitializeBitmapInstruction<
     TProgramAddress,
+    TAccountMaster,
+    TAccountStats,
     TAccountBitmap,
     TAccountAirdrop,
-    TAccountOwner,
+    TAccountTreasury,
+    TAccountAuthority,
     TAccountSystemProgram
   >;
 
@@ -306,10 +394,13 @@ export type ParsedInitializeBitmapInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    bitmap: TAccountMetas[0];
-    airdrop: TAccountMetas[1];
-    owner: TAccountMetas[2];
-    systemProgram: TAccountMetas[3];
+    master: TAccountMetas[0];
+    stats: TAccountMetas[1];
+    bitmap: TAccountMetas[2];
+    airdrop: TAccountMetas[3];
+    treasury: TAccountMetas[4];
+    authority: TAccountMetas[5];
+    systemProgram: TAccountMetas[6];
   };
   data: InitializeBitmapInstructionData;
 };
@@ -322,7 +413,7 @@ export function parseInitializeBitmapInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedInitializeBitmapInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 4) {
+  if (instruction.accounts.length < 7) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -335,9 +426,12 @@ export function parseInitializeBitmapInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
+      master: getNextAccount(),
+      stats: getNextAccount(),
       bitmap: getNextAccount(),
       airdrop: getNextAccount(),
-      owner: getNextAccount(),
+      treasury: getNextAccount(),
+      authority: getNextAccount(),
       systemProgram: getNextAccount(),
     },
     data: getInitializeBitmapInstructionDataDecoder().decode(instruction.data),

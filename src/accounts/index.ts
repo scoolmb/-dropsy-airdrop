@@ -9,3 +9,5 @@
 export * from './airdrop';
 export * from './bitmapAccount';
 export * from './controller';
+export * from './master';
+export * from './stats';

@@ -11,19 +11,13 @@ import {
   fixDecoderSize,
   fixEncoderSize,
   getAddressEncoder,
-  getArrayDecoder,
-  getArrayEncoder,
   getBytesDecoder,
   getBytesEncoder,
-  getI64Decoder,
-  getI64Encoder,
-  getOptionDecoder,
-  getOptionEncoder,
   getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
-  getU8Decoder,
-  getU8Encoder,
+  getU64Decoder,
+  getU64Encoder,
   transformEncoder,
   type Address,
   type Codec,
@@ -34,8 +28,6 @@ import {
   type IInstruction,
   type IInstructionWithAccounts,
   type IInstructionWithData,
-  type Option,
-  type OptionOrNullable,
   type ReadonlyAccount,
   type ReadonlyUint8Array,
   type TransactionSigner,
@@ -49,24 +41,25 @@ import {
   type ResolvedAccount,
 } from '../shared';
 
-export const INITIALIZE_AIRDROP_DISCRIMINATOR = new Uint8Array([
-  96, 196, 74, 102, 61, 195, 48, 184,
+export const WITHDRAW_CONTROLLER_FEES_DISCRIMINATOR = new Uint8Array([
+  252, 199, 14, 46, 100, 156, 176, 230,
 ]);
 
-export function getInitializeAirdropDiscriminatorBytes() {
+export function getWithdrawControllerFeesDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    INITIALIZE_AIRDROP_DISCRIMINATOR
+    WITHDRAW_CONTROLLER_FEES_DISCRIMINATOR
   );
 }
 
-export type InitializeAirdropInstruction<
+export type WithdrawControllerFeesInstruction<
   TProgram extends string = typeof DROPSY_PROGRAM_ADDRESS,
-  TAccountStats extends string | IAccountMeta<string> = string,
+  TAccountMaster extends string | IAccountMeta<string> = string,
   TAccountController extends string | IAccountMeta<string> = string,
-  TAccountAirdrop extends string | IAccountMeta<string> = string,
   TAccountFeeVault extends string | IAccountMeta<string> = string,
-  TAccountMint extends string | IAccountMeta<string> = string,
   TAccountAuthority extends string | IAccountMeta<string> = string,
+  TAccountTreasury extends
+    | string
+    | IAccountMeta<string> = 'DHffy4rNMtuL8VKgyBEay4jcq8AYHyoAzxLKU6aEijUV',
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
@@ -75,25 +68,22 @@ export type InitializeAirdropInstruction<
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountStats extends string
-        ? WritableAccount<TAccountStats>
-        : TAccountStats,
+      TAccountMaster extends string
+        ? ReadonlyAccount<TAccountMaster>
+        : TAccountMaster,
       TAccountController extends string
-        ? WritableAccount<TAccountController>
+        ? ReadonlyAccount<TAccountController>
         : TAccountController,
-      TAccountAirdrop extends string
-        ? WritableAccount<TAccountAirdrop>
-        : TAccountAirdrop,
       TAccountFeeVault extends string
         ? WritableAccount<TAccountFeeVault>
         : TAccountFeeVault,
-      TAccountMint extends string
-        ? ReadonlyAccount<TAccountMint>
-        : TAccountMint,
       TAccountAuthority extends string
         ? WritableSignerAccount<TAccountAuthority> &
             IAccountSignerMeta<TAccountAuthority>
         : TAccountAuthority,
+      TAccountTreasury extends string
+        ? WritableAccount<TAccountTreasury>
+        : TAccountTreasury,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -101,100 +91,88 @@ export type InitializeAirdropInstruction<
     ]
   >;
 
-export type InitializeAirdropInstructionData = {
+export type WithdrawControllerFeesInstructionData = {
   discriminator: ReadonlyUint8Array;
-  merkleRoot: Array<number>;
-  startsTime: Option<bigint>;
-  endTime: Option<bigint>;
+  amount: bigint;
 };
 
-export type InitializeAirdropInstructionDataArgs = {
-  merkleRoot: Array<number>;
-  startsTime: OptionOrNullable<number | bigint>;
-  endTime: OptionOrNullable<number | bigint>;
+export type WithdrawControllerFeesInstructionDataArgs = {
+  amount: number | bigint;
 };
 
-export function getInitializeAirdropInstructionDataEncoder(): Encoder<InitializeAirdropInstructionDataArgs> {
+export function getWithdrawControllerFeesInstructionDataEncoder(): Encoder<WithdrawControllerFeesInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      ['merkleRoot', getArrayEncoder(getU8Encoder(), { size: 32 })],
-      ['startsTime', getOptionEncoder(getI64Encoder())],
-      ['endTime', getOptionEncoder(getI64Encoder())],
+      ['amount', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: INITIALIZE_AIRDROP_DISCRIMINATOR })
+    (value) => ({
+      ...value,
+      discriminator: WITHDRAW_CONTROLLER_FEES_DISCRIMINATOR,
+    })
   );
 }
 
-export function getInitializeAirdropInstructionDataDecoder(): Decoder<InitializeAirdropInstructionData> {
+export function getWithdrawControllerFeesInstructionDataDecoder(): Decoder<WithdrawControllerFeesInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    ['merkleRoot', getArrayDecoder(getU8Decoder(), { size: 32 })],
-    ['startsTime', getOptionDecoder(getI64Decoder())],
-    ['endTime', getOptionDecoder(getI64Decoder())],
+    ['amount', getU64Decoder()],
   ]);
 }
 
-export function getInitializeAirdropInstructionDataCodec(): Codec<
-  InitializeAirdropInstructionDataArgs,
-  InitializeAirdropInstructionData
+export function getWithdrawControllerFeesInstructionDataCodec(): Codec<
+  WithdrawControllerFeesInstructionDataArgs,
+  WithdrawControllerFeesInstructionData
 > {
   return combineCodec(
-    getInitializeAirdropInstructionDataEncoder(),
-    getInitializeAirdropInstructionDataDecoder()
+    getWithdrawControllerFeesInstructionDataEncoder(),
+    getWithdrawControllerFeesInstructionDataDecoder()
   );
 }
 
-export type InitializeAirdropAsyncInput<
-  TAccountStats extends string = string,
+export type WithdrawControllerFeesAsyncInput<
+  TAccountMaster extends string = string,
   TAccountController extends string = string,
-  TAccountAirdrop extends string = string,
   TAccountFeeVault extends string = string,
-  TAccountMint extends string = string,
   TAccountAuthority extends string = string,
+  TAccountTreasury extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  stats?: Address<TAccountStats>;
-  controller: Address<TAccountController>;
-  airdrop?: Address<TAccountAirdrop>;
+  master?: Address<TAccountMaster>;
+  controller?: Address<TAccountController>;
   feeVault?: Address<TAccountFeeVault>;
-  mint: Address<TAccountMint>;
   authority: TransactionSigner<TAccountAuthority>;
+  treasury?: Address<TAccountTreasury>;
   systemProgram?: Address<TAccountSystemProgram>;
-  merkleRoot: InitializeAirdropInstructionDataArgs['merkleRoot'];
-  startsTime: InitializeAirdropInstructionDataArgs['startsTime'];
-  endTime: InitializeAirdropInstructionDataArgs['endTime'];
+  amount: WithdrawControllerFeesInstructionDataArgs['amount'];
 };
 
-export async function getInitializeAirdropInstructionAsync<
-  TAccountStats extends string,
+export async function getWithdrawControllerFeesInstructionAsync<
+  TAccountMaster extends string,
   TAccountController extends string,
-  TAccountAirdrop extends string,
   TAccountFeeVault extends string,
-  TAccountMint extends string,
   TAccountAuthority extends string,
+  TAccountTreasury extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof DROPSY_PROGRAM_ADDRESS,
 >(
-  input: InitializeAirdropAsyncInput<
-    TAccountStats,
+  input: WithdrawControllerFeesAsyncInput<
+    TAccountMaster,
     TAccountController,
-    TAccountAirdrop,
     TAccountFeeVault,
-    TAccountMint,
     TAccountAuthority,
+    TAccountTreasury,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
-  InitializeAirdropInstruction<
+  WithdrawControllerFeesInstruction<
     TProgramAddress,
-    TAccountStats,
+    TAccountMaster,
     TAccountController,
-    TAccountAirdrop,
     TAccountFeeVault,
-    TAccountMint,
     TAccountAuthority,
+    TAccountTreasury,
     TAccountSystemProgram
   >
 > {
@@ -203,12 +181,11 @@ export async function getInitializeAirdropInstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
-    stats: { value: input.stats ?? null, isWritable: true },
-    controller: { value: input.controller ?? null, isWritable: true },
-    airdrop: { value: input.airdrop ?? null, isWritable: true },
+    master: { value: input.master ?? null, isWritable: false },
+    controller: { value: input.controller ?? null, isWritable: false },
     feeVault: { value: input.feeVault ?? null, isWritable: true },
-    mint: { value: input.mint ?? null, isWritable: false },
     authority: { value: input.authority ?? null, isWritable: true },
+    treasury: { value: input.treasury ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -220,22 +197,26 @@ export async function getInitializeAirdropInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.stats.value) {
-    accounts.stats.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(new Uint8Array([115, 116, 97, 116, 115])),
-      ],
-    });
-  }
-  if (!accounts.airdrop.value) {
-    accounts.airdrop.value = await getProgramDerivedAddress({
+  if (!accounts.master.value) {
+    accounts.master.value = await getProgramDerivedAddress({
       programAddress,
       seeds: [
         getBytesEncoder().encode(
-          new Uint8Array([97, 105, 114, 100, 114, 111, 112])
+          new Uint8Array([109, 97, 115, 116, 101, 114, 51])
         ),
-        getAddressEncoder().encode(expectAddress(accounts.mint.value)),
+      ],
+    });
+  }
+  if (!accounts.controller.value) {
+    accounts.controller.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(
+          new Uint8Array([
+            99, 111, 110, 116, 114, 111, 108, 108, 101, 114, 45, 100, 114, 111,
+            112, 115, 121,
+          ])
+        ),
         getAddressEncoder().encode(expectAddress(accounts.authority.value)),
       ],
     });
@@ -249,6 +230,10 @@ export async function getInitializeAirdropInstructionAsync<
       ],
     });
   }
+  if (!accounts.treasury.value) {
+    accounts.treasury.value =
+      'DHffy4rNMtuL8VKgyBEay4jcq8AYHyoAzxLKU6aEijUV' as Address<'DHffy4rNMtuL8VKgyBEay4jcq8AYHyoAzxLKU6aEijUV'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
@@ -257,81 +242,72 @@ export async function getInitializeAirdropInstructionAsync<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.stats),
+      getAccountMeta(accounts.master),
       getAccountMeta(accounts.controller),
-      getAccountMeta(accounts.airdrop),
       getAccountMeta(accounts.feeVault),
-      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.authority),
+      getAccountMeta(accounts.treasury),
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
-    data: getInitializeAirdropInstructionDataEncoder().encode(
-      args as InitializeAirdropInstructionDataArgs
+    data: getWithdrawControllerFeesInstructionDataEncoder().encode(
+      args as WithdrawControllerFeesInstructionDataArgs
     ),
-  } as InitializeAirdropInstruction<
+  } as WithdrawControllerFeesInstruction<
     TProgramAddress,
-    TAccountStats,
+    TAccountMaster,
     TAccountController,
-    TAccountAirdrop,
     TAccountFeeVault,
-    TAccountMint,
     TAccountAuthority,
+    TAccountTreasury,
     TAccountSystemProgram
   >;
 
   return instruction;
 }
 
-export type InitializeAirdropInput<
-  TAccountStats extends string = string,
+export type WithdrawControllerFeesInput<
+  TAccountMaster extends string = string,
   TAccountController extends string = string,
-  TAccountAirdrop extends string = string,
   TAccountFeeVault extends string = string,
-  TAccountMint extends string = string,
   TAccountAuthority extends string = string,
+  TAccountTreasury extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  stats: Address<TAccountStats>;
+  master: Address<TAccountMaster>;
   controller: Address<TAccountController>;
-  airdrop: Address<TAccountAirdrop>;
   feeVault: Address<TAccountFeeVault>;
-  mint: Address<TAccountMint>;
   authority: TransactionSigner<TAccountAuthority>;
+  treasury?: Address<TAccountTreasury>;
   systemProgram?: Address<TAccountSystemProgram>;
-  merkleRoot: InitializeAirdropInstructionDataArgs['merkleRoot'];
-  startsTime: InitializeAirdropInstructionDataArgs['startsTime'];
-  endTime: InitializeAirdropInstructionDataArgs['endTime'];
+  amount: WithdrawControllerFeesInstructionDataArgs['amount'];
 };
 
-export function getInitializeAirdropInstruction<
-  TAccountStats extends string,
+export function getWithdrawControllerFeesInstruction<
+  TAccountMaster extends string,
   TAccountController extends string,
-  TAccountAirdrop extends string,
   TAccountFeeVault extends string,
-  TAccountMint extends string,
   TAccountAuthority extends string,
+  TAccountTreasury extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof DROPSY_PROGRAM_ADDRESS,
 >(
-  input: InitializeAirdropInput<
-    TAccountStats,
+  input: WithdrawControllerFeesInput<
+    TAccountMaster,
     TAccountController,
-    TAccountAirdrop,
     TAccountFeeVault,
-    TAccountMint,
     TAccountAuthority,
+    TAccountTreasury,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): InitializeAirdropInstruction<
+): WithdrawControllerFeesInstruction<
   TProgramAddress,
-  TAccountStats,
+  TAccountMaster,
   TAccountController,
-  TAccountAirdrop,
   TAccountFeeVault,
-  TAccountMint,
   TAccountAuthority,
+  TAccountTreasury,
   TAccountSystemProgram
 > {
   // Program address.
@@ -339,12 +315,11 @@ export function getInitializeAirdropInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    stats: { value: input.stats ?? null, isWritable: true },
-    controller: { value: input.controller ?? null, isWritable: true },
-    airdrop: { value: input.airdrop ?? null, isWritable: true },
+    master: { value: input.master ?? null, isWritable: false },
+    controller: { value: input.controller ?? null, isWritable: false },
     feeVault: { value: input.feeVault ?? null, isWritable: true },
-    mint: { value: input.mint ?? null, isWritable: false },
     authority: { value: input.authority ?? null, isWritable: true },
+    treasury: { value: input.treasury ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -356,6 +331,10 @@ export function getInitializeAirdropInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.treasury.value) {
+    accounts.treasury.value =
+      'DHffy4rNMtuL8VKgyBEay4jcq8AYHyoAzxLKU6aEijUV' as Address<'DHffy4rNMtuL8VKgyBEay4jcq8AYHyoAzxLKU6aEijUV'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
@@ -364,58 +343,55 @@ export function getInitializeAirdropInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.stats),
+      getAccountMeta(accounts.master),
       getAccountMeta(accounts.controller),
-      getAccountMeta(accounts.airdrop),
       getAccountMeta(accounts.feeVault),
-      getAccountMeta(accounts.mint),
       getAccountMeta(accounts.authority),
+      getAccountMeta(accounts.treasury),
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
-    data: getInitializeAirdropInstructionDataEncoder().encode(
-      args as InitializeAirdropInstructionDataArgs
+    data: getWithdrawControllerFeesInstructionDataEncoder().encode(
+      args as WithdrawControllerFeesInstructionDataArgs
     ),
-  } as InitializeAirdropInstruction<
+  } as WithdrawControllerFeesInstruction<
     TProgramAddress,
-    TAccountStats,
+    TAccountMaster,
     TAccountController,
-    TAccountAirdrop,
     TAccountFeeVault,
-    TAccountMint,
     TAccountAuthority,
+    TAccountTreasury,
     TAccountSystemProgram
   >;
 
   return instruction;
 }
 
-export type ParsedInitializeAirdropInstruction<
+export type ParsedWithdrawControllerFeesInstruction<
   TProgram extends string = typeof DROPSY_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    stats: TAccountMetas[0];
+    master: TAccountMetas[0];
     controller: TAccountMetas[1];
-    airdrop: TAccountMetas[2];
-    feeVault: TAccountMetas[3];
-    mint: TAccountMetas[4];
-    authority: TAccountMetas[5];
-    systemProgram: TAccountMetas[6];
+    feeVault: TAccountMetas[2];
+    authority: TAccountMetas[3];
+    treasury: TAccountMetas[4];
+    systemProgram: TAccountMetas[5];
   };
-  data: InitializeAirdropInstructionData;
+  data: WithdrawControllerFeesInstructionData;
 };
 
-export function parseInitializeAirdropInstruction<
+export function parseWithdrawControllerFeesInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedInitializeAirdropInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 7) {
+): ParsedWithdrawControllerFeesInstruction<TProgram, TAccountMetas> {
+  if (instruction.accounts.length < 6) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -428,14 +404,15 @@ export function parseInitializeAirdropInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      stats: getNextAccount(),
+      master: getNextAccount(),
       controller: getNextAccount(),
-      airdrop: getNextAccount(),
       feeVault: getNextAccount(),
-      mint: getNextAccount(),
       authority: getNextAccount(),
+      treasury: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getInitializeAirdropInstructionDataDecoder().decode(instruction.data),
+    data: getWithdrawControllerFeesInstructionDataDecoder().decode(
+      instruction.data
+    ),
   };
 }

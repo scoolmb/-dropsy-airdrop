@@ -21,15 +21,19 @@ import {
   type ParsedInitializeAirdropInstruction,
   type ParsedInitializeBitmapInstruction,
   type ParsedInitializeControllerInstruction,
+  type ParsedInitializeMasterInstruction,
+  type ParsedWithdrawControllerFeesInstruction,
 } from '../instructions';
 
 export const DROPSY_PROGRAM_ADDRESS =
-  'DropyEMekkCgKmsWiJVcTCAEeFgvHpDAW19ipWebFaPv' as Address<'DropyEMekkCgKmsWiJVcTCAEeFgvHpDAW19ipWebFaPv'>;
+  'DropmEfonJRZyPaRQbPgn4nrt3cDi5678bLbzVQRvgLp' as Address<'DropmEfonJRZyPaRQbPgn4nrt3cDi5678bLbzVQRvgLp'>;
 
 export enum DropsyAccount {
   Airdrop,
   BitmapAccount,
   Controller,
+  Master,
+  Stats,
 }
 
 export function identifyDropsyAccount(
@@ -69,6 +73,28 @@ export function identifyDropsyAccount(
   ) {
     return DropsyAccount.Controller;
   }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([168, 213, 193, 12, 77, 162, 58, 235])
+      ),
+      0
+    )
+  ) {
+    return DropsyAccount.Master;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([190, 125, 51, 63, 169, 197, 36, 238])
+      ),
+      0
+    )
+  ) {
+    return DropsyAccount.Stats;
+  }
   throw new Error(
     'The provided account could not be identified as a dropsy account.'
   );
@@ -82,6 +108,8 @@ export enum DropsyInstruction {
   InitializeAirdrop,
   InitializeBitmap,
   InitializeController,
+  InitializeMaster,
+  WithdrawControllerFees,
 }
 
 export function identifyDropsyInstruction(
@@ -165,13 +193,35 @@ export function identifyDropsyInstruction(
   ) {
     return DropsyInstruction.InitializeController;
   }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([206, 91, 246, 30, 216, 101, 134, 166])
+      ),
+      0
+    )
+  ) {
+    return DropsyInstruction.InitializeMaster;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([252, 199, 14, 46, 100, 156, 176, 230])
+      ),
+      0
+    )
+  ) {
+    return DropsyInstruction.WithdrawControllerFees;
+  }
   throw new Error(
     'The provided instruction could not be identified as a dropsy instruction.'
   );
 }
 
 export type ParsedDropsyInstruction<
-  TProgram extends string = 'DropyEMekkCgKmsWiJVcTCAEeFgvHpDAW19ipWebFaPv',
+  TProgram extends string = 'DropmEfonJRZyPaRQbPgn4nrt3cDi5678bLbzVQRvgLp',
 > =
   | ({
       instructionType: DropsyInstruction.ClaimTokens;
@@ -193,4 +243,10 @@ export type ParsedDropsyInstruction<
     } & ParsedInitializeBitmapInstruction<TProgram>)
   | ({
       instructionType: DropsyInstruction.InitializeController;
-    } & ParsedInitializeControllerInstruction<TProgram>);
+    } & ParsedInitializeControllerInstruction<TProgram>)
+  | ({
+      instructionType: DropsyInstruction.InitializeMaster;
+    } & ParsedInitializeMasterInstruction<TProgram>)
+  | ({
+      instructionType: DropsyInstruction.WithdrawControllerFees;
+    } & ParsedWithdrawControllerFeesInstruction<TProgram>);

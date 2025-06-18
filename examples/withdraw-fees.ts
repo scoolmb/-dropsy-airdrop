@@ -4,7 +4,7 @@ import {
   sendTransactionWithoutConfirmingFactory,
   signTransactionMessageWithSigners,
 } from "@solana/kit";
-import * as dropsy from "./src";
+import * as dropsy from "../src";
 
 
 
@@ -22,7 +22,10 @@ const main = async () => {
     )
   );
 
-  const instruction = await dropsy.getWithdrawControllerFeesInstructionAsync({
+  const instruction = dropsy.getWithdrawControllerFeesInstruction({
+    master: masterPda,
+    controller: controller,
+    feeVault: feeVault,
     authority: authority,
     amount: 500,
   })

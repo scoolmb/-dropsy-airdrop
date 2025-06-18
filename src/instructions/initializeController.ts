@@ -53,12 +53,14 @@ export function getInitializeControllerDiscriminatorBytes() {
 
 export type InitializeControllerInstruction<
   TProgram extends string = typeof DROPSY_PROGRAM_ADDRESS,
+  TAccountMaster extends string | IAccountMeta<string> = string,
+  TAccountStats extends string | IAccountMeta<string> = string,
   TAccountController extends string | IAccountMeta<string> = string,
   TAccountFeeVault extends string | IAccountMeta<string> = string,
   TAccountTreasury extends
     | string
     | IAccountMeta<string> = 'DHffy4rNMtuL8VKgyBEay4jcq8AYHyoAzxLKU6aEijUV',
-  TAccountPayer extends string | IAccountMeta<string> = string,
+  TAccountAuthority extends string | IAccountMeta<string> = string,
   TAccountSystemProgram extends
     | string
     | IAccountMeta<string> = '11111111111111111111111111111111',
@@ -67,19 +69,25 @@ export type InitializeControllerInstruction<
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
+      TAccountMaster extends string
+        ? ReadonlyAccount<TAccountMaster>
+        : TAccountMaster,
+      TAccountStats extends string
+        ? WritableAccount<TAccountStats>
+        : TAccountStats,
       TAccountController extends string
         ? WritableAccount<TAccountController>
         : TAccountController,
       TAccountFeeVault extends string
-        ? ReadonlyAccount<TAccountFeeVault>
+        ? WritableAccount<TAccountFeeVault>
         : TAccountFeeVault,
       TAccountTreasury extends string
         ? WritableAccount<TAccountTreasury>
         : TAccountTreasury,
-      TAccountPayer extends string
-        ? WritableSignerAccount<TAccountPayer> &
-            IAccountSignerMeta<TAccountPayer>
-        : TAccountPayer,
+      TAccountAuthority extends string
+        ? WritableSignerAccount<TAccountAuthority> &
+            IAccountSignerMeta<TAccountAuthority>
+        : TAccountAuthority,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -89,21 +97,18 @@ export type InitializeControllerInstruction<
 
 export type InitializeControllerInstructionData = {
   discriminator: ReadonlyUint8Array;
-  createFee: bigint;
-  claimFee: bigint;
+  feeLamports: bigint;
 };
 
 export type InitializeControllerInstructionDataArgs = {
-  createFee: number | bigint;
-  claimFee: number | bigint;
+  feeLamports: number | bigint;
 };
 
 export function getInitializeControllerInstructionDataEncoder(): Encoder<InitializeControllerInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      ['createFee', getU64Encoder()],
-      ['claimFee', getU64Encoder()],
+      ['feeLamports', getU64Encoder()],
     ]),
     (value) => ({
       ...value,
@@ -115,8 +120,7 @@ export function getInitializeControllerInstructionDataEncoder(): Encoder<Initial
 export function getInitializeControllerInstructionDataDecoder(): Decoder<InitializeControllerInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    ['createFee', getU64Decoder()],
-    ['claimFee', getU64Decoder()],
+    ['feeLamports', getU64Decoder()],
   ]);
 }
 
@@ -131,44 +135,53 @@ export function getInitializeControllerInstructionDataCodec(): Codec<
 }
 
 export type InitializeControllerAsyncInput<
+  TAccountMaster extends string = string,
+  TAccountStats extends string = string,
   TAccountController extends string = string,
   TAccountFeeVault extends string = string,
   TAccountTreasury extends string = string,
-  TAccountPayer extends string = string,
+  TAccountAuthority extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
+  master?: Address<TAccountMaster>;
+  stats?: Address<TAccountStats>;
   controller?: Address<TAccountController>;
-  feeVault: Address<TAccountFeeVault>;
+  feeVault?: Address<TAccountFeeVault>;
   treasury?: Address<TAccountTreasury>;
-  payer: TransactionSigner<TAccountPayer>;
+  authority: TransactionSigner<TAccountAuthority>;
   systemProgram?: Address<TAccountSystemProgram>;
-  createFee: InitializeControllerInstructionDataArgs['createFee'];
-  claimFee: InitializeControllerInstructionDataArgs['claimFee'];
+  feeLamports: InitializeControllerInstructionDataArgs['feeLamports'];
 };
 
 export async function getInitializeControllerInstructionAsync<
+  TAccountMaster extends string,
+  TAccountStats extends string,
   TAccountController extends string,
   TAccountFeeVault extends string,
   TAccountTreasury extends string,
-  TAccountPayer extends string,
+  TAccountAuthority extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof DROPSY_PROGRAM_ADDRESS,
 >(
   input: InitializeControllerAsyncInput<
+    TAccountMaster,
+    TAccountStats,
     TAccountController,
     TAccountFeeVault,
     TAccountTreasury,
-    TAccountPayer,
+    TAccountAuthority,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
   InitializeControllerInstruction<
     TProgramAddress,
+    TAccountMaster,
+    TAccountStats,
     TAccountController,
     TAccountFeeVault,
     TAccountTreasury,
-    TAccountPayer,
+    TAccountAuthority,
     TAccountSystemProgram
   >
 > {
@@ -177,10 +190,12 @@ export async function getInitializeControllerInstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
+    master: { value: input.master ?? null, isWritable: false },
+    stats: { value: input.stats ?? null, isWritable: true },
     controller: { value: input.controller ?? null, isWritable: true },
-    feeVault: { value: input.feeVault ?? null, isWritable: false },
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
     treasury: { value: input.treasury ?? null, isWritable: true },
-    payer: { value: input.payer ?? null, isWritable: true },
+    authority: { value: input.authority ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -192,6 +207,24 @@ export async function getInitializeControllerInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.master.value) {
+    accounts.master.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(
+          new Uint8Array([109, 97, 115, 116, 101, 114, 51])
+        ),
+      ],
+    });
+  }
+  if (!accounts.stats.value) {
+    accounts.stats.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(new Uint8Array([115, 116, 97, 116, 115])),
+      ],
+    });
+  }
   if (!accounts.controller.value) {
     accounts.controller.value = await getProgramDerivedAddress({
       programAddress,
@@ -202,7 +235,16 @@ export async function getInitializeControllerInstructionAsync<
             112, 115, 121,
           ])
         ),
-        getAddressEncoder().encode(expectAddress(accounts.payer.value)),
+        getAddressEncoder().encode(expectAddress(accounts.authority.value)),
+      ],
+    });
+  }
+  if (!accounts.feeVault.value) {
+    accounts.feeVault.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(new Uint8Array([118, 97, 117, 108, 116])),
+        getAddressEncoder().encode(expectAddress(accounts.controller.value)),
       ],
     });
   }
@@ -218,10 +260,12 @@ export async function getInitializeControllerInstructionAsync<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
+      getAccountMeta(accounts.master),
+      getAccountMeta(accounts.stats),
       getAccountMeta(accounts.controller),
       getAccountMeta(accounts.feeVault),
       getAccountMeta(accounts.treasury),
-      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.authority),
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
@@ -230,10 +274,12 @@ export async function getInitializeControllerInstructionAsync<
     ),
   } as InitializeControllerInstruction<
     TProgramAddress,
+    TAccountMaster,
+    TAccountStats,
     TAccountController,
     TAccountFeeVault,
     TAccountTreasury,
-    TAccountPayer,
+    TAccountAuthority,
     TAccountSystemProgram
   >;
 
@@ -241,43 +287,52 @@ export async function getInitializeControllerInstructionAsync<
 }
 
 export type InitializeControllerInput<
+  TAccountMaster extends string = string,
+  TAccountStats extends string = string,
   TAccountController extends string = string,
   TAccountFeeVault extends string = string,
   TAccountTreasury extends string = string,
-  TAccountPayer extends string = string,
+  TAccountAuthority extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
+  master: Address<TAccountMaster>;
+  stats: Address<TAccountStats>;
   controller: Address<TAccountController>;
   feeVault: Address<TAccountFeeVault>;
   treasury?: Address<TAccountTreasury>;
-  payer: TransactionSigner<TAccountPayer>;
+  authority: TransactionSigner<TAccountAuthority>;
   systemProgram?: Address<TAccountSystemProgram>;
-  createFee: InitializeControllerInstructionDataArgs['createFee'];
-  claimFee: InitializeControllerInstructionDataArgs['claimFee'];
+  feeLamports: InitializeControllerInstructionDataArgs['feeLamports'];
 };
 
 export function getInitializeControllerInstruction<
+  TAccountMaster extends string,
+  TAccountStats extends string,
   TAccountController extends string,
   TAccountFeeVault extends string,
   TAccountTreasury extends string,
-  TAccountPayer extends string,
+  TAccountAuthority extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof DROPSY_PROGRAM_ADDRESS,
 >(
   input: InitializeControllerInput<
+    TAccountMaster,
+    TAccountStats,
     TAccountController,
     TAccountFeeVault,
     TAccountTreasury,
-    TAccountPayer,
+    TAccountAuthority,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
 ): InitializeControllerInstruction<
   TProgramAddress,
+  TAccountMaster,
+  TAccountStats,
   TAccountController,
   TAccountFeeVault,
   TAccountTreasury,
-  TAccountPayer,
+  TAccountAuthority,
   TAccountSystemProgram
 > {
   // Program address.
@@ -285,10 +340,12 @@ export function getInitializeControllerInstruction<
 
   // Original accounts.
   const originalAccounts = {
+    master: { value: input.master ?? null, isWritable: false },
+    stats: { value: input.stats ?? null, isWritable: true },
     controller: { value: input.controller ?? null, isWritable: true },
-    feeVault: { value: input.feeVault ?? null, isWritable: false },
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
     treasury: { value: input.treasury ?? null, isWritable: true },
-    payer: { value: input.payer ?? null, isWritable: true },
+    authority: { value: input.authority ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -312,10 +369,12 @@ export function getInitializeControllerInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
+      getAccountMeta(accounts.master),
+      getAccountMeta(accounts.stats),
       getAccountMeta(accounts.controller),
       getAccountMeta(accounts.feeVault),
       getAccountMeta(accounts.treasury),
-      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.authority),
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
@@ -324,10 +383,12 @@ export function getInitializeControllerInstruction<
     ),
   } as InitializeControllerInstruction<
     TProgramAddress,
+    TAccountMaster,
+    TAccountStats,
     TAccountController,
     TAccountFeeVault,
     TAccountTreasury,
-    TAccountPayer,
+    TAccountAuthority,
     TAccountSystemProgram
   >;
 
@@ -340,11 +401,13 @@ export type ParsedInitializeControllerInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    controller: TAccountMetas[0];
-    feeVault: TAccountMetas[1];
-    treasury: TAccountMetas[2];
-    payer: TAccountMetas[3];
-    systemProgram: TAccountMetas[4];
+    master: TAccountMetas[0];
+    stats: TAccountMetas[1];
+    controller: TAccountMetas[2];
+    feeVault: TAccountMetas[3];
+    treasury: TAccountMetas[4];
+    authority: TAccountMetas[5];
+    systemProgram: TAccountMetas[6];
   };
   data: InitializeControllerInstructionData;
 };
@@ -357,7 +420,7 @@ export function parseInitializeControllerInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedInitializeControllerInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 5) {
+  if (instruction.accounts.length < 7) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -370,10 +433,12 @@ export function parseInitializeControllerInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
+      master: getNextAccount(),
+      stats: getNextAccount(),
       controller: getNextAccount(),
       feeVault: getNextAccount(),
       treasury: getNextAccount(),
-      payer: getNextAccount(),
+      authority: getNextAccount(),
       systemProgram: getNextAccount(),
     },
     data: getInitializeControllerInstructionDataDecoder().decode(
