@@ -101,7 +101,7 @@ feeLamports: BigInt(5000), // The fee lamports others will pay when c using your
 
 Get initialize airdrop instruction :
 
-````bash
+```bash
 import * as dropsy from "@dropsy/airdrop";
 
 // Create the instruction to initialize your controller
@@ -114,11 +114,14 @@ const ix = dropsy.getInitializeAirdropInstructionAsync({
     endTime: null,   // BigInt(.....)    // time when the airdrop will end (default is after 60 days  )
 });
 ```
-checkout the init-airdrop.ts in the examples folder to discover how to create merkleRoot
 
+checkout the init-airdrop.ts in the examples folder to discover how to create merkleRoot
 
 ## 📚 Documentation
 
 Full API documentation is available at
 👉 [https://scoolmb.github.io/dropsy-airdrop/](https://scoolmb.github.io/dropsy-airdrop/)
-````
+
+```
+
+```
