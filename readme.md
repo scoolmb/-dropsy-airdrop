@@ -89,6 +89,7 @@ Why Use a Controller?
 
 How to Initialize a Controller :
 
+```bash
 import \* as dropsy from "@dropsy/airdrop";
 
 // Create the instruction to initialize your controller
@@ -96,6 +97,7 @@ const ix = await dropsy.getInitializeControllerInstructionAsync({
 authority: wallet, // the owner of the controller (the signer )
 feeLamports: BigInt(5000), // The fee lamports others will pay when c using your controller
 });
+```
 
 ## 📚 Documentation
 
