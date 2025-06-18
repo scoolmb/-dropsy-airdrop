@@ -113,8 +113,9 @@ const ix = dropsy.getInitializeAirdropInstructionAsync({
     startsTime: null,  // BigInt(.....)   // time when the airdrop will start (default is now )
     endTime: null,   // BigInt(.....)    // time when the airdrop will end (default is after 60 days  )
 });
-```bash
+```
 checkout the init-airdrop.ts in the examples folder to discover how to create merkleRoot
+
 
 ## 📚 Documentation
 
